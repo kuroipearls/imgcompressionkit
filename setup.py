@@ -8,12 +8,6 @@ setup(name='imgcompressionkit',
 	version='0.1',
 	description='Image compression kit for halftoning and block truncation coding (BTC).',
 	long_description='Image compression kit for halftoning and block truncation coding (BTC).',
-	classifiers=[
-		'Development status :: 3 - Alpha',
-		'License :: OSI Approved :: MIT License',
-		'Programming Language :: Python :: 3.7.4',
-		'Topic :: Image Processing :: Halftoning'
-	],
 	keywords='halftoning',
 	url='https://github.com/kuroipearls/imgcompressionkit',
 	author='kuroipearls',

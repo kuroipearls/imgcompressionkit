@@ -15,7 +15,7 @@ setup(name='imgcompressionkit',
 		'Topic :: Image Processing :: Halftoning'
 	],
 	keywords='halftoning',
-	url='https://kuroipearls.github.io',
+	url='https://github.com/kuroipearls/imgcompressionkit',
 	author='kuroipearls',
 	author_email='dellafitrayani@gmail.com',
 	license='MIT',

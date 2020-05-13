@@ -5,7 +5,7 @@ def readme():
 		return f.read()
 
 setup(name='imgcompressionkit',
-	version='0.2',
+	version='0.3',
 	description='Image compression kit for halftoning and block truncation coding (BTC).',
 	long_description='Image compression kit for halftoning and block truncation coding (BTC).',
 	keywords=['halftoning', 'block truncation coding', 'image compression'],

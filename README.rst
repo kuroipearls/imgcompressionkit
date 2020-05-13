@@ -13,6 +13,8 @@ To use halftoning, you can use ::
 	>>> imgcompressionkit.dotDiffusion('../datasets', 'knuth8', 127.5)
 	>>> imgcompressionkit.edbs('../datasets', 'OD')
 
+Block Truncation Coding : Basic BTC, Error Diffusion BTC (EDBTC), Ordered Dithering BTC (ODBTC), Dot Diffusion BTC (DDBTC). 
+
 To use block truncation coding, you can use ::
 
 	>>> import imgcompressionkit

@@ -45,9 +45,9 @@ For further explanations & parameters on each method, this .README file will be 
 
 
 Tutorial Bahasa Indonesia
--------------------------
+=========================
 
-Package ini terdiri dari 2 teknik untuk melakukan kompresi gambar : Halftoning ~ biner 0 / 1 dan Block Truncation Coding - BTC ~ nilai maks / nilai min. 
+Package ini terdiri dari 2 teknik untuk melakukan kompresi gambar : **Halftoning** (biner 0 / 1) dan **Block Truncation Coding - BTC** (nilai maks / nilai min). 
 
 Untuk melakukan instalasi package ini, gunakan command berikut pada cmd / terminal.
 ::

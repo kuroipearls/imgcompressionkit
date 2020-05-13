@@ -22,7 +22,6 @@ setup(name='imgcompressionkit',
 	],
 	classifiers=[
 		'Development Status :: 3 - Alpha',
-		'Topic :: Software Development :: Image Processing',
 		'License :: OSI Approved :: MIT License',
 		'Programming Language :: Python :: 3.7',
 	],

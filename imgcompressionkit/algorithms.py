@@ -40,29 +40,23 @@ def errorDif(image, height, width, ktype, threshold, pad):
 
 	return np.uint8(image[0:height, 1:width+1])
 
-def ditherArray(ktype):
-	if ktype == 'bayer8dispersed':
-		dArray = np.array([[0, 32, 8, 40, 2, 34, 10, 42],
-			[48, 16, 56, 24, 50, 18, 58, 26],
-			[12, 44, 4, 36, 14, 46, 6, 38],
-			[60, 28, 52, 20, 62, 30, 54, 22],
-			[3, 35, 11, 43, 1, 33, 9, 41],
-			[51, 19, 59, 27, 49, 17, 57, 25],
-			[15, 47, 7, 39, 13, 45, 5, 37],
-			[63, 31, 55, 23, 61, 29, 53, 21]], dtype=np.float32)
-	else:
-		dArray = np.array([[62, 57, 48, 36, 37, 49, 58, 63],
-			[56, 47, 35, 21, 22, 38, 50, 59],
-			[46, 34, 20, 10, 11, 23, 39, 51],
-			[33, 19, 9, 3, 0, 4, 12, 24],
-			[32, 18, 8, 2, 1, 5, 13, 25],
-			[45, 31, 17, 7, 6, 14, 26, 40],
-			[55, 44, 30, 16, 15, 27, 41, 52],
-			[61, 54, 43, 29, 28, 42, 53, 60]], dtype=np.float32)
-	return tools.normalize(dArray)
+def ditherArray(a, b, ksize, value, step, matrix = [[]]):
+	if matrix == [[]]:
+		matrix = [[0 for i in range(ksize)] for i in range(ksize)]
+	if ksize == 1:
+		matrix[b][a] = value
+		return
 
-def orderedDith(image, height, width, ktype):
-	kernel = ditherArray(ktype)
+	half = int(ksize / 2)
+
+	ditherArray(a, b, half, value + (step * 0), step * 4, matrix)
+	ditherArray(a + half, b + half, half, value + (step * 1), step * 4, matrix)
+	ditherArray(a + half, b, half, value + (step * 2), step * 4, matrix)
+	ditherArray(a, b + half, half, value + (step * 3), step * 4, matrix)
+	return tools.normalize(np.asarray(matrix))
+
+def orderedDith(image, height, width, ksize):
+	kernel = ditherArray(int(0), int(0), int(ksize), int(0), int(1))
 	kheight, kwidth = tools.getInfo(kernel)
 	bs = kheight
 	loopHeight = np.uint8(height / bs)
@@ -163,18 +157,11 @@ def edbSearch(image, imageHT, height, width):
 
 	HalfCPPSize = 6
 	HalfCPPSizeM = -6
-	EPS = 0
-	EPS_MIN = 0
+	EPS, EPS_MIN = 0, 0
 	CountB = 1
 
 	while CountB != 0:
-		CountB = 0
-		a0 = 0
-		a1 = 0
-		a0c = 0
-		a1c = 0
-		Cpx = 0
-		Cpy = 0
+		CountB, a0, a1, a0c, a1c, Cpx, Cpy = 0, 0, 0, 0, 0, 0, 0
 		for i in range(0, height):
 			for j in range(0, width):
 				a0c = 0
@@ -228,3 +215,133 @@ def edbSearch(image, imageHT, height, width):
 					CountB = CountB + 1
 
 	return np.uint8(imageHT * 255)
+
+def btcoding(image, height, width, bs):
+	lheight, lwidth = int(height / bs), int(width / bs)
+	tot = np.float32(bs * bs)
+
+	for i in range(0, lheight):
+		for j in range(0, lwidth):
+			tempImg = image[i*bs:i*bs+bs,j*bs:j*bs+bs]
+			mean = tools.getMean(tempImg)
+			std = tools.getStd(tempImg)
+			for x in range(0, bs):
+				for y in range(0, bs):
+					if tempImg[x][y] > mean:
+						tempImg[x][y] = 1
+					else:
+						tempImg[x][y] = 0
+			sumPos = np.float32(np.sum(tempImg))
+			if sumPos == 0:
+				sumPos = 1
+			a = np.uint8(mean - std * np.sqrt(sumPos / (tot - sumPos)))
+			b = np.uint8(mean + std * np.sqrt((tot - sumPos) / sumPos))
+			for x in range(0, bs):
+				for y in range(0, bs):
+					if tempImg[x][y] == 1:
+						image[i*bs+x][j*bs+y] = b
+					else:
+						image[i*bs+x][j*bs+y] = a
+	return np.uint8(image)
+
+def edbtcoding(image, height, width, ktype, pad, bs):
+	lheight, lwidth = int(height / bs), int(width / bs)
+	tot = np.float32(bs * bs)
+
+	kernel, kernelX, kernelY = matError(ktype)
+	for i in range(0, lheight):
+		for j in range(0, lwidth):
+			tempImg = image[i*bs:i*bs+bs,j*bs:j*bs+bs]
+			mean = tools.getMean(tempImg)
+			nMax = tools.getMax(tempImg)
+			nMin = tools.getMin(tempImg)
+			tempImg = np.pad(tempImg, ((0,pad),(pad,pad)), 'constant', constant_values=0)
+
+			for x in range(0, bs):
+				for y in range(0, bs):
+					if tempImg[x][y+1] > mean:
+						tempValue = nMax
+					else:
+						tempValue = nMin
+					error = tempImg[x][y+1] - tempValue
+					image[i*bs+x][j*bs+y] = tempValue
+					for value, valueX, valueY in zip(np.nditer(kernel), np.nditer(kernelX), np.nditer(kernelY)):
+						tempImg[x + valueX][y + valueY] = np.float32(tempImg[x + valueX][y + valueY] + error * value)
+	return np.uint8(image)
+
+def odbtcoding(image, height, width, ksize):
+	kernel = ditherArray(int(0), int(0), int(ksize), int(0), int(1))
+	kheight, kwidth = tools.getInfo(kernel)
+	bs = kheight
+	loopHeight = np.uint8(height / bs)
+	loopWidth = np.uint8(width / bs)
+
+	image = tools.normalize(image)
+
+	for i in range(0, loopHeight):
+		for j in range(0, loopWidth):
+			tempImg = image[i*bs:i*bs+bs,j*bs:j*bs+bs]
+			nMax = tools.getMax(tempImg)
+			nMin = tools.getMin(tempImg)
+			k = nMax - nMin
+
+			for x in range(0, bs):
+				for y in range(0, bs):
+					DA = k * kernel[x][y]
+					th = DA + nMin
+					if image[i*bs+x][j*bs+y] >= th:
+						image[i*bs+x][j*bs+y] = nMax
+					else:
+						image[i*bs+x][j*bs+y] = nMin
+	return np.uint8(image * 255)
+
+def ddbtcoding(image, height, width, ktype):
+	ordKernel = orderMat(ktype)
+	kheight, kwidth = tools.getInfo(ordKernel)
+
+	# handle location for the order map
+	patLoc = np.zeros((kheight * kwidth, 2))
+	for m in range(0, kheight):
+		for n in range(0, kwidth):
+			patLoc[ordKernel[m][n]][0] = m
+			patLoc[ordKernel[m][n]][1] = n
+	patMaps = np.zeros((height, width))
+
+	# get weight kernel (error kernel)
+	weightKernel = matErrorDD()
+
+	# create a dummy array to help calculation
+	dumArray = np.copy(image)
+
+	for i in range(0, height, kheight):
+		for j in range(0, width, kwidth):
+			index = 0
+			tempImg = image[i:i+kheight,j:j+kwidth]
+			mean = tools.getMean(tempImg)
+			nMax = tools.getMax(tempImg)
+			nMin = tools.getMin(tempImg)
+			while index != (kheight * kwidth):
+				ni = int(i + patLoc[index][0])
+				nj = int(j + patLoc[index][1])
+				if dumArray[ni][nj] > mean:
+					dummy = nMax
+				else:
+					dummy = nMin
+				error = dumArray[ni][nj] - dummy
+				image[ni][nj] = dummy
+				patMaps[ni][nj] = 1
+				fm = 0
+				for m in range(-1, 2):
+					for n in range(-1, 2):
+						if (ni + m >= 0) and (ni + m < height) and (nj + n >= 0) and (nj + n < width):
+							if patMaps[ni + m][nj + n] == 0:
+								fm = fm + weightKernel[m + 1][n + 1]
+
+				for m in range(-1, 2):
+					for n in range(-1, 2):
+						if (ni + m >= 0) and (ni + m < height) and (nj + n >= 0) and (nj + n < width):
+							if patMaps[ni + m][nj + n] == 0:
+								dumArray[ni + m][nj + n] = dumArray[ni + m][nj + n] + (error * weightKernel[m + 1][n + 1] / fm)
+
+				index = index + 1
+	return np.uint8(image)

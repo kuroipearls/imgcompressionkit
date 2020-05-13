@@ -5,10 +5,10 @@ def readme():
 		return f.read()
 
 setup(name='imgcompressionkit',
-	version='0.1',
+	version='0.2',
 	description='Image compression kit for halftoning and block truncation coding (BTC).',
 	long_description='Image compression kit for halftoning and block truncation coding (BTC).',
-	keywords='halftoning',
+	keywords=['halftoning', 'block truncation coding', 'image compression'],
 	url='https://github.com/kuroipearls/imgcompressionkit',
 	author='kuroipearls',
 	author_email='dellafitrayani@gmail.com',
@@ -18,7 +18,13 @@ setup(name='imgcompressionkit',
 		'numpy',
 		'pillow',
 		'opencv-python',
-		'scipy'
+		'scipy',
+	],
+	classifiers=[
+		'Development Status :: 3 - Alpha',
+		'Topic :: Software Development :: Image Processing',
+		'License :: OSI Approved :: MIT License',
+		'Programming Language :: Python :: 3.7',
 	],
 	test_suite='nose.collector',
 	tests_require=['nose', 'nose-cover3'],

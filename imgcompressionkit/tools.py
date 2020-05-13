@@ -38,3 +38,15 @@ def psnr(source, result):
 
 def normalize(image):
 	return np.float32((image - image.min()) / (image.max() - image.min()) * 1)
+
+def getMean(image):
+	return np.float32(np.mean(image))
+
+def getStd(image):
+	return np.float32(np.std(image))
+
+def getMax(image):
+	return np.float32(np.amax(image))
+
+def getMin(image):
+	return np.float32(np.amin(image))
